@@ -27,6 +27,18 @@ export default function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ) {
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api');
+
+  if (isApiRoute) {
+    // Optional: apply auth protection to API routes, if you want
+    if (isProtectedRoute(request)) {
+      return clerkMiddleware()(request, event);
+    }
+
+    // Otherwise, skip intlMiddleware for API routes
+    return NextResponse.next();
+  }
+
   if (
     request.nextUrl.pathname.includes('/sign-in')
     || request.nextUrl.pathname.includes('/sign-up')
@@ -43,22 +55,6 @@ export default function middleware(
           // `unauthenticatedUrl` is needed to avoid error: "Unable to find `next-intl` locale because the middleware didn't run on this request"
           unauthenticatedUrl: signInUrl.toString(),
         });
-      }
-
-      const authObj = await auth();
-
-      if (
-        authObj.userId
-        && !authObj.orgId
-        && req.nextUrl.pathname.includes('/dashboard')
-        && !req.nextUrl.pathname.endsWith('/organization-selection')
-      ) {
-        const orgSelection = new URL(
-          '/onboarding/organization-selection',
-          req.url,
-        );
-
-        return NextResponse.redirect(orgSelection);
       }
 
       return intlMiddleware(req);

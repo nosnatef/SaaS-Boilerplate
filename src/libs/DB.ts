@@ -7,6 +7,7 @@ import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglit
 import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator';
 import { PHASE_PRODUCTION_BUILD } from 'next/dist/shared/lib/constants';
 import { Client } from 'pg';
+import { eq } from 'drizzle-orm';
 
 import * as schema from '@/models/Schema';
 
@@ -43,3 +44,82 @@ if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
 }
 
 export const db = drizzle;
+
+export async function getUserSubscription(userId: string) {
+  const subscription = await db
+    .select()
+    .from(schema.userSubscriptionSchema)
+    .where(eq(schema.userSubscriptionSchema.userId, userId))
+    .limit(1);
+
+  return subscription[0];
+}
+
+export async function createUserSubscription({
+  userId,
+  stripeCustomerId,
+  stripeSubscriptionId,
+  stripeSubscriptionPriceId,
+  stripeSubscriptionStatus,
+  stripeSubscriptionCurrentPeriodEnd,
+}: {
+  userId: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+  stripeSubscriptionPriceId: string;
+  stripeSubscriptionStatus: string;
+  stripeSubscriptionCurrentPeriodEnd: number;
+}) {
+  const subscription = await db
+    .insert(schema.userSubscriptionSchema)
+    .values({
+      userId,
+      stripeCustomerId,
+      stripeSubscriptionId,
+      stripeSubscriptionPriceId,
+      stripeSubscriptionStatus,
+      stripeSubscriptionCurrentPeriodEnd,
+    })
+    .returning();
+
+  return subscription[0];
+}
+
+export async function updateUserSubscription({
+  userId,
+  stripeCustomerId,
+  stripeSubscriptionId,
+  stripeSubscriptionPriceId,
+  stripeSubscriptionStatus,
+  stripeSubscriptionCurrentPeriodEnd,
+}: {
+  userId: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripeSubscriptionPriceId?: string;
+  stripeSubscriptionStatus?: string;
+  stripeSubscriptionCurrentPeriodEnd?: number;
+}) {
+  const subscription = await db
+    .update(schema.userSubscriptionSchema)
+    .set({
+      stripeCustomerId,
+      stripeSubscriptionId,
+      stripeSubscriptionPriceId,
+      stripeSubscriptionStatus,
+      stripeSubscriptionCurrentPeriodEnd,
+    })
+    .where(eq(schema.userSubscriptionSchema.userId, userId))
+    .returning();
+
+  return subscription[0];
+}
+
+export async function deleteUserSubscription(userId: string) {
+  const subscription = await db
+    .delete(schema.userSubscriptionSchema)
+    .where(eq(schema.userSubscriptionSchema.userId, userId))
+    .returning();
+
+  return subscription[0];
+}

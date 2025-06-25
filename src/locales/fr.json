@@ -89,9 +89,7 @@
   "DashboardLayout": {
     "home": "Accueil",
     "todos": "Todos",
-    "members": "Membres",
-    "billing": "Facturation",
-    "settings": "Réglages"
+    "billing": "Facturation"
   },
   "Dashboard": {
     "meta_title": "Tableau de bord du SaaS Template",
@@ -108,10 +106,6 @@
   "UserProfile": {
     "title_bar": "Profil utilisateur",
     "title_bar_description": "Afficher et gérer votre profil utilisateur"
-  },
-  "OrganizationProfile": {
-    "title_bar": "Gestion de l’organisation",
-    "title_bar_description": "Gérer votre organisation"
   },
   "Billing": {
     "title_bar": "Facturation",
