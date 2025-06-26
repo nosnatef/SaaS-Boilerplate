@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  integer
 } from 'drizzle-orm/pg-core';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
@@ -52,6 +53,7 @@ export const userSubscriptionSchema = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    token: integer().default(10),
   },
   (table) => {
     return {
@@ -61,4 +63,25 @@ export const userSubscriptionSchema = pgTable(
       userIdIdx: uniqueIndex('user_id_idx').on(table.userId),
     };
   },
+);
+
+export const userContentSchema = pgTable(
+  'user_content',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id').notNull(), // Foreign key relation (logical, not enforced unless you define FK separately)
+    content: text('content').notNull(), // text type works like varchar without length limit
+    createdBy: text('created_by').notNull(),
+    isPublic: integer('is_public').default(0).notNull(), // 0 = false, 1 = true (or use boolean if preferred)
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => {
+    return {
+      userIdIdx: uniqueIndex('user_content_user_id_idx').on(table.id, table.userId),
+    };
+  }
 );

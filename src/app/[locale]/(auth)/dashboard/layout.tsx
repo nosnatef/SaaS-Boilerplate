@@ -29,6 +29,10 @@ export default function DashboardLayout(props: { children: React.ReactNode }) {
                 label: t('home'),
               },
               {
+                href: '/dashboard/content',
+                label: t('my_creations'),
+              },
+              {
                 href: '/dashboard/billing',
                 label: t('billing'),
               },

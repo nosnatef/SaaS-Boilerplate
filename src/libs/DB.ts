@@ -7,7 +7,7 @@ import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglit
 import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator';
 import { PHASE_PRODUCTION_BUILD } from 'next/dist/shared/lib/constants';
 import { Client } from 'pg';
-import { eq } from 'drizzle-orm';
+import { eq, sql, desc, and } from 'drizzle-orm';
 
 import * as schema from '@/models/Schema';
 
@@ -122,4 +122,105 @@ export async function deleteUserSubscription(userId: string) {
     .returning();
 
   return subscription[0];
+}
+
+export async function createBasicUserSubscription(userId: string) {
+  const subscription = await db
+    .insert(schema.userSubscriptionSchema)
+    .values({
+      userId,
+      stripeCustomerId: '',
+      stripeSubscriptionId: '',
+      stripeSubscriptionPriceId: '',
+      stripeSubscriptionStatus: '',
+      stripeSubscriptionCurrentPeriodEnd: 0,
+      token: 10,
+    })
+    .returning();
+
+  return subscription[0];
+}
+
+// Token management functions
+export async function getUserTokenCount(userId: string) {
+  const subscription = await db
+    .select({ token: schema.userSubscriptionSchema.token })
+    .from(schema.userSubscriptionSchema)
+    .where(eq(schema.userSubscriptionSchema.userId, userId))
+    .limit(1);
+
+  return subscription[0]?.token || 0;
+}
+
+export async function decrementUserTokens(userId: string) {
+  const subscription = await db
+    .update(schema.userSubscriptionSchema)
+    .set({
+      token: sql`GREATEST(${schema.userSubscriptionSchema.token} - 1, 0)`,
+    })
+    .where(eq(schema.userSubscriptionSchema.userId, userId))
+    .returning();
+
+  return subscription[0];
+}
+
+export async function addUserTokens(userId: string, tokens: number) {
+  const subscription = await db
+    .update(schema.userSubscriptionSchema)
+    .set({
+      token: sql`${schema.userSubscriptionSchema.token} + ${tokens}`,
+    })
+    .where(eq(schema.userSubscriptionSchema.userId, userId))
+    .returning();
+
+  return subscription[0];
+}
+
+// User content functions
+export async function createUserContent({
+  userId,
+  content,
+  createdBy,
+  isPublic = false,
+}: {
+  userId: string;
+  content: string;
+  createdBy: string;
+  isPublic?: boolean;
+}) {
+  const userContent = await db
+    .insert(schema.userContentSchema)
+    .values({
+      userId,
+      content,
+      createdBy,
+      isPublic: isPublic ? 1 : 0,
+    })
+    .returning();
+
+  return userContent[0];
+}
+
+export async function getUserContent(userId: string) {
+  const userContent = await db
+    .select()
+    .from(schema.userContentSchema)
+    .where(eq(schema.userContentSchema.userId, userId))
+    .orderBy(desc(schema.userContentSchema.createdAt));
+
+  return userContent;
+}
+
+export async function deleteUserContent(contentId: number, userId: string) {
+  const userContent = await db
+    .delete(schema.userContentSchema)
+    .where(
+      and(
+        eq(schema.userContentSchema.id, contentId),
+        eq(schema.userContentSchema.userId, userId)
+      )
+    )
+    .returning();
+
+  return userContent[0];
 }

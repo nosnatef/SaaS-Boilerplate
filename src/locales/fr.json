@@ -88,6 +88,7 @@
   },
   "DashboardLayout": {
     "home": "Accueil",
+    "my_creations": "Mes Créations",
     "todos": "Todos",
     "billing": "Facturation"
   },
@@ -156,5 +157,32 @@
     "message_title": "Message",
     "message_description": "Entrez un message détaillé pour votre todo.",
     "submit_button": "Envoyer"
+  },
+  "CreateContent": {
+    "title_bar": "Créer du Contenu",
+    "title_bar_description": "Créer du nouveau contenu en utilisant vos jetons",
+    "create_content_title": "Créer du Nouveau Contenu",
+    "create_content_description": "Écrivez votre contenu ci-dessous. Chaque création coûte 1 jeton.",
+    "content_label": "Contenu",
+    "content_placeholder": "Entrez votre contenu ici...",
+    "content_description": "Écrivez ce que vous souhaitez créer. Cela sera stocké dans votre bibliothèque de contenu personnelle.",
+    "token_cost_info": "Coût : 1 jeton par création",
+    "cancel_button": "Annuler",
+    "create_button": "Créer du Contenu",
+    "creating_button": "Création..."
+  },
+  "Content": {
+    "title_bar": "Mes Créations",
+    "title_bar_description": "Afficher et gérer votre contenu créé",
+    "no_content": "Aucun contenu créé pour le moment",
+    "no_content_description": "Commencez à créer du contenu pour le voir ici",
+    "create_content_button": "Créer du Contenu",
+    "delete_content_button": "Supprimer",
+    "created_by": "Créé par",
+    "created_at": "Créé le",
+    "content_preview": "Aperçu du Contenu",
+    "delete_confirmation": "Êtes-vous sûr de vouloir supprimer ce contenu ?",
+    "delete_success": "Contenu supprimé avec succès",
+    "delete_error": "Échec de la suppression du contenu"
   }
 }

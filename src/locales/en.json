@@ -88,6 +88,7 @@
   },
   "DashboardLayout": {
     "home": "Home",
+    "my_creations": "My Creations",
     "todos": "Todos",
     "billing": "Billing"
   },
@@ -156,5 +157,32 @@
     "message_title": "Message",
     "message_description": "Enter a detailed message for your todo.",
     "submit_button": "Submit"
+  },
+  "CreateContent": {
+    "title_bar": "Create Content",
+    "title_bar_description": "Create new content using your tokens",
+    "create_content_title": "Create New Content",
+    "create_content_description": "Write your content below. Each creation costs 1 token.",
+    "content_label": "Content",
+    "content_placeholder": "Enter your content here...",
+    "content_description": "Write whatever you'd like to create. This will be stored in your personal content library.",
+    "token_cost_info": "Cost: 1 token per creation",
+    "cancel_button": "Cancel",
+    "create_button": "Create Content",
+    "creating_button": "Creating..."
+  },
+  "Content": {
+    "title_bar": "My Creations",
+    "title_bar_description": "View and manage your created content",
+    "no_content": "No content created yet",
+    "no_content_description": "Start creating content to see it here",
+    "create_content_button": "Create Content",
+    "delete_content_button": "Delete",
+    "created_by": "Created by",
+    "created_at": "Created at",
+    "content_preview": "Content Preview",
+    "delete_confirmation": "Are you sure you want to delete this content?",
+    "delete_success": "Content deleted successfully",
+    "delete_error": "Failed to delete content"
   }
 }
