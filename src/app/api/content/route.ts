@@ -2,9 +2,8 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { 
-  createUserContent, 
-  getUserTokenCount, 
-  decrementUserTokens 
+  consumeTokenAndCreateContent,
+  getUserSubscription
 } from '@/libs/DB';
 
 export async function POST(req: NextRequest) {
@@ -20,32 +19,24 @@ export async function POST(req: NextRequest) {
       return new NextResponse('Content is required and must be a string', { status: 400 });
     }
 
-    // Check if user has tokens
-    const tokenCount = await getUserTokenCount(userId);
-    if (tokenCount <= 0) {
-      return new NextResponse('Insufficient tokens. Please purchase more tokens to continue.', { status: 402 });
-    }
-
     // Get user info for createdBy field
     const user = await currentUser();
     const createdBy = user?.firstName && user?.lastName 
       ? `${user.firstName} ${user.lastName}`
       : user?.emailAddresses?.[0]?.emailAddress || 'Unknown User';
 
-    // Create the content
-    const userContent = await createUserContent({
+
+    // Create the content (consumeTokenAndCreateContent handles token validation atomically)
+    const result = await consumeTokenAndCreateContent({
       userId,
       content,
       createdBy,
     });
 
-    // Decrement user tokens
-    await decrementUserTokens(userId);
-
     return NextResponse.json({ 
       success: true, 
-      content: userContent,
-      remainingTokens: tokenCount - 1
+      content: result.content,
+      remainingTokens: result.remainingTokens
     });
   } catch (error) {
     console.error('Error creating content:', error);

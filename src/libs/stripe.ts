@@ -25,6 +25,12 @@ export async function createOrRetrieveCustomer({
     const existingCustomer = existingCustomers.data[0];
     if (existingCustomer) {
       customerId = existingCustomer.id;
+      // Update existing customer with userId metadata
+      await stripe.customers.update(customerId, {
+        metadata: {
+          userId,
+        },
+      });
     } else {
       const customer = await stripe.customers.create({
         email,
@@ -52,11 +58,13 @@ export async function createCheckoutSession({
   customerId,
   successUrl,
   cancelUrl,
+  userId,
 }: {
   priceId: string;
   customerId: string;
   successUrl: string;
   cancelUrl: string;
+  userId: string;
 }) {
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
@@ -71,7 +79,7 @@ export async function createCheckoutSession({
     cancel_url: cancelUrl,
     subscription_data: {
       metadata: {
-        userId: customerId,
+        userId: userId,
       },
     },
   });

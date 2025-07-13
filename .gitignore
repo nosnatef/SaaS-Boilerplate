@@ -51,6 +51,7 @@ local
 .vercel
 
 stripe.exe
+svix.exe
 .env
 .env.local
 .env.production

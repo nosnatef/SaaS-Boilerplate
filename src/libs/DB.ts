@@ -45,6 +45,51 @@ if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
 
 export const db = drizzle;
 
+// Webhook event idempotency functions
+export async function isWebhookEventProcessed(eventId: string) {
+  const event = await db
+    .select()
+    .from(schema.webhookEventsSchema)
+    .where(eq(schema.webhookEventsSchema.id, eventId))
+    .limit(1);
+
+  return event.length > 0;
+}
+
+export async function recordWebhookEvent({
+  eventId,
+  eventType,
+  userId,
+  metadata,
+}: {
+  eventId: string;
+  eventType: string;
+  userId?: string;
+  metadata?: string;
+}) {
+  const event = await db
+    .insert(schema.webhookEventsSchema)
+    .values({
+      id: eventId,
+      eventType,
+      userId,
+      metadata,
+    })
+    .returning();
+
+  return event[0];
+}
+
+export async function updateWebhookEventUserId(eventId: string, userId: string) {
+  const event = await db
+    .update(schema.webhookEventsSchema)
+    .set({ userId })
+    .where(eq(schema.webhookEventsSchema.id, eventId))
+    .returning();
+
+  return event[0];
+}
+
 export async function getUserSubscription(userId: string) {
   const subscription = await db
     .select()
@@ -165,10 +210,15 @@ export async function decrementUserTokens(userId: string) {
 }
 
 export async function addUserTokens(userId: string, tokens: number) {
+  // Add validation
+  if (tokens <= 0 || tokens > 10000) {
+    throw new Error('Invalid token amount');
+  }
+  
   const subscription = await db
     .update(schema.userSubscriptionSchema)
     .set({
-      token: sql`${schema.userSubscriptionSchema.token} + ${tokens}`,
+      token: sql`LEAST(${schema.userSubscriptionSchema.token} + ${tokens}, 100000)`, // Cap at 100k
     })
     .where(eq(schema.userSubscriptionSchema.userId, userId))
     .returning();
@@ -223,4 +273,49 @@ export async function deleteUserContent(contentId: number, userId: string) {
     .returning();
 
   return userContent[0];
+}
+
+export async function consumeTokenAndCreateContent({
+  userId,
+  content,
+  createdBy,
+}: {
+  userId: string;
+  content: string;
+  createdBy: string;
+}) {
+  return await db.transaction(async (tx) => {
+    // Check and decrement tokens atomically
+    const subscription = await tx
+      .update(schema.userSubscriptionSchema)
+      .set({
+        token: sql`GREATEST(${schema.userSubscriptionSchema.token} - 1, 0)`,
+      })
+      .where(
+        and(
+          eq(schema.userSubscriptionSchema.userId, userId),
+          sql`${schema.userSubscriptionSchema.token} > 0`
+        )
+      )
+      .returning();
+
+    if (!subscription[0]) {
+      throw new Error('Insufficient tokens');
+    }
+
+    // Create content
+    const userContent = await tx
+      .insert(schema.userContentSchema)
+      .values({
+        userId,
+        content,
+        createdBy,
+      })
+      .returning();
+
+    return {
+      content: userContent[0],
+      remainingTokens: subscription[0].token,
+    };
+  });
 }

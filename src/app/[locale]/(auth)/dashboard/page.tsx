@@ -33,17 +33,14 @@ const DashboardIndexPage = () => {
         const data: TokenResponse = await response.json();
         setTokenCount(data.tokenCount);
       } else if (response.status === 404) {
-        // User doesn't have tokens, initialize them
-        const initResponse = await fetch('/api/tokens/init', {
-          method: 'POST',
-        });
-        if (initResponse.ok) {
-          const initData: TokenResponse = await initResponse.json();
-          setTokenCount(initData.tokenCount);
-        }
+        // User doesn't have a subscription record - this shouldn't happen with Clerk webhook
+        // but handle gracefully by setting token count to 0
+        console.warn('No subscription found for user - should be created by Clerk webhook');
+        setTokenCount(0);
       }
     } catch (error) {
       console.error('Error fetching token count:', error);
+      setTokenCount(0);
     } finally {
       setIsLoading(false);
     }

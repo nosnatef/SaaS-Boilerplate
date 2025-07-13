@@ -65,6 +65,24 @@ export const userSubscriptionSchema = pgTable(
   },
 );
 
+export const webhookEventsSchema = pgTable(
+  'webhook_events',
+  {
+    id: text('id').primaryKey(), // Stripe event ID
+    eventType: text('event_type').notNull(),
+    processedAt: timestamp('processed_at', { mode: 'date' }).defaultNow().notNull(),
+    userId: text('user_id'),
+    metadata: text('metadata'), // JSON string for additional data
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      eventTypeIdx: uniqueIndex('webhook_event_type_idx').on(table.eventType),
+      userIdIdx: uniqueIndex('webhook_user_id_idx').on(table.userId),
+    };
+  },
+);
+
 export const userContentSchema = pgTable(
   'user_content',
   {

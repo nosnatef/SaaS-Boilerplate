@@ -3,16 +3,25 @@
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
 import { TitleBar } from '@/features/dashboard/TitleBar';
 import { MessageState } from '@/features/dashboard/MessageState';
 import { PricingCard } from '@/features/billing/PricingCard';
 import { PricingFeature } from '@/features/billing/PricingFeature';
+import { Banner, BannerTitle, BannerDescription } from '@/components/ui/banner';
 import { PLAN_ID, PricingPlanList } from '@/utils/AppConfig';
 import { loadStripe } from '@stripe/stripe-js';
 import { Env } from '@/libs/Env';
 
 const stripePromise = loadStripe(Env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
+interface BannerMessage {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+}
 
 const BillingPage = () => {
   const t = useTranslations('Billing');
@@ -21,20 +30,36 @@ const BillingPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [banners, setBanners] = useState<BannerMessage[]>([]);
 
   const success = searchParams.get('success');
   const canceled = searchParams.get('canceled');
 
   useEffect(() => {
     if (success) {
-      // Show success message
-      console.log('Payment successful!');
+      addBanner({
+        type: 'success',
+        title: 'Payment Successful!',
+        message: 'Your subscription has been activated successfully.',
+      });
     }
     if (canceled) {
-      // Show canceled message
-      console.log('Payment canceled.');
+      addBanner({
+        type: 'warning',
+        title: 'Payment Canceled',
+        message: 'Your payment was canceled. You can try again anytime.',
+      });
     }
   }, [success, canceled]);
+
+  const addBanner = (banner: Omit<BannerMessage, 'id'>) => {
+    const id = Date.now().toString();
+    setBanners(prev => [...prev, { ...banner, id }]);
+  };
+
+  const removeBanner = (id: string) => {
+    setBanners(prev => prev.filter(banner => banner.id !== id));
+  };
 
   const handleSubscribe = async (priceId: string) => {
     try {
@@ -49,7 +74,13 @@ const BillingPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        const errorText = await response.text();
+        addBanner({
+          type: 'error',
+          title: 'Subscription Error',
+          message: errorText || 'Failed to create checkout session. Please try again.',
+        });
+        return;
       }
 
       const { sessionId } = await response.json();
@@ -58,11 +89,20 @@ const BillingPage = () => {
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         if (error) {
-          console.error('Stripe error:', error);
+          addBanner({
+            type: 'error',
+            title: 'Stripe Error',
+            message: error.message || 'An error occurred while redirecting to checkout.',
+          });
         }
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
+      addBanner({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Failed to connect to the server. Please check your internet connection and try again.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,15 +117,56 @@ const BillingPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create customer portal session');
+        const errorText = await response.text();
+        addBanner({
+          type: 'error',
+          title: 'Portal Error',
+          message: errorText || 'Failed to create customer portal session. Please try again.',
+        });
+        return;
       }
 
       const { url } = await response.json();
       router.push(url);
     } catch (error) {
       console.error('Error creating customer portal session:', error);
+      addBanner({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Failed to connect to the server. Please check your internet connection and try again.',
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getBannerIcon = (type: BannerMessage['type']) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'error':
+        return <XCircle className="h-4 w-4" />;
+      case 'warning':
+        return <AlertCircle className="h-4 w-4" />;
+      case 'info':
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const getBannerVariant = (type: BannerMessage['type']) => {
+    switch (type) {
+      case 'success':
+        return 'success';
+      case 'error':
+        return 'destructive';
+      case 'warning':
+        return 'warning';
+      case 'info':
+        return 'info';
+      default:
+        return 'default';
     }
   };
 
@@ -95,6 +176,23 @@ const BillingPage = () => {
         title={t('title_bar')}
         description={t('title_bar_description')}
       />
+
+      {/* Banner Messages */}
+      {banners.length > 0 && (
+        <div className="mb-6 space-y-2">
+          {banners.map((banner) => (
+            <Banner
+              key={banner.id}
+              variant={getBannerVariant(banner.type)}
+              onDismiss={() => removeBanner(banner.id)}
+            >
+              {getBannerIcon(banner.type)}
+              <BannerTitle>{banner.title}</BannerTitle>
+              <BannerDescription>{banner.message}</BannerDescription>
+            </Banner>
+          ))}
+        </div>
+      )}
 
       {success && (
         <MessageState

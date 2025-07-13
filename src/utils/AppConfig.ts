@@ -29,7 +29,7 @@ export const PLAN_ID = {
 export const PricingPlanList: Record<string, PricingPlan> = {
   [PLAN_ID.PREMIUM]: {
     id: PLAN_ID.PREMIUM,
-    price: 79,
+    price: 12,
     interval: BILLING_INTERVAL.MONTH,
     testPriceId: 'price_1Re2E7BGLMf9HCnJBxGslUAu', // Use for testing
     // FIXME: Update the price ID, you can create it after running `npm run stripe:setup-price`
@@ -44,7 +44,7 @@ export const PricingPlanList: Record<string, PricingPlan> = {
   },
   [PLAN_ID.ENTERPRISE]: {
     id: PLAN_ID.ENTERPRISE,
-    price: 199,
+    price: 12,
     interval: BILLING_INTERVAL.MONTH,
     testPriceId: 'price_1Re2E7BGLMf9HCnJBxGslUAu', // Use for testing
     // FIXME: Update the price ID, you can create it after running `npm run stripe:setup-price`

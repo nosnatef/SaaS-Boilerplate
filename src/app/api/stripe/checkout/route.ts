@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
       return new NextResponse('Price ID is required', { status: 400 });
     }
 
-    // Get user subscription to check if they already have one
+    // Get user subscription to check if they already have a Stripe subscription
     const subscription = await getUserSubscription(userId);
 
-    if (subscription?.stripeSubscriptionId) {
-      return new NextResponse('User already has a subscription', {
+    if (subscription?.stripeSubscriptionStatus) {
+      return new NextResponse('User already has an active Stripe subscription', {
         status: 400,
       });
     }
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       customerId,
       successUrl: `${Env.BASE_URL}/dashboard/billing?success=true`,
       cancelUrl: `${Env.BASE_URL}/dashboard/billing?canceled=true`,
+      userId,
     });
 
     return NextResponse.json({ sessionId: session.id });
